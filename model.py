@@ -186,7 +186,8 @@ class Encoder(nn.Module):
         outputs, _ = self.lstm(x)
 
         outputs, _ = nn.utils.rnn.pad_packed_sequence(
-            outputs, batch_first=True)
+            outputs, batch_first=True
+            )
 
         return outputs
 
