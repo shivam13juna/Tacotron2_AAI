@@ -14,6 +14,7 @@ from fp16_optimizer import FP16_Optimizer
 
 from model import Tacotron2
 from data_utils import TextMelLoader, TextMelCollate
+from ema import train_ema, test_ema
 from loss_function import Tacotron2Loss
 from logger import Tacotron2Logger
 from hparams import create_hparams
@@ -52,18 +53,14 @@ def init_distributed(hparams, n_gpus, rank, group_name):
 
 def prepare_dataloaders(hparams):
     # Get data, data loaders and collate function ready
-    trainset = TextMelLoader(hparams.training_files, hparams)
-    valset = TextMelLoader(hparams.validation_files, hparams)
-    collate_fn = TextMelCollate(hparams.n_frames_per_step)
+    trainset = train_ema()
+    valset = test_ema()
 
-    train_sampler = DistributedSampler(trainset) \
-        if hparams.distributed_run else None
 
-    train_loader = DataLoader(trainset, num_workers=1, shuffle=False,
-                              sampler=train_sampler,
-                              batch_size=hparams.batch_size, pin_memory=False,
-                              drop_last=True, collate_fn=collate_fn)
-    return train_loader, valset, collate_fn
+    train_loader = DataLoader(trainset, num_workers=1, shuffle=False, batch_size = hparams.batch_size, pin_memory=False, drop_last=True)
+    test_loader = DataLoader(valset,  num_workers=1, shuffle=False, batch_size=hparams.batch_size, pin_memory=False, drop_last=True)
+
+    return train_loader, valset
 
 
 def prepare_directories_and_logger(output_directory, log_directory, rank):
