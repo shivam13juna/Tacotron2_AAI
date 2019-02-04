@@ -194,7 +194,7 @@ class train_ema():
 
     def get_mel_text_pair(self, audiopath_and_text, index):
         # separate filename and text
-        phoneme, ema = audiopath_and_text[0][index], audiopath_and_text[1][index]
+        phoneme, ema = audiopath_and_text[0], audiopath_and_text[1]
         return (phoneme, ema)   
 
     def __getitem__(self, index):
@@ -212,23 +212,11 @@ class test_ema():
 
     def get_mel_text_pair(self, audiopath_and_text, index):
         # separate filename and text
-        phoneme, ema = audiopath_and_text[0][index], audiopath_and_text[1][index]
+        phoneme, ema = audiopath_and_text[0], audiopath_and_text[1]
         return (phoneme, ema)   
 
     def __getitem__(self, index):
         return self.get_mel_text_pair(self.audiopath_and_text[index])
-    
-
-        
-            
-
-
-    
-
-        
-
-    def __getitem__(self, index):
-        return self.get_mel_text_pair(self.)
 
 
 
