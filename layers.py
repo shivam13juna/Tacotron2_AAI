@@ -26,10 +26,8 @@ class ConvNorm(torch.nn.Module):
             assert(kernel_size % 2 == 1)
             padding = int(dilation * (kernel_size - 1) / 2)
 
-        self.conv = torch.nn.Conv1d(in_channels, out_channels,
-                                    kernel_size=kernel_size, stride=stride,
-                                    padding=padding, dilation=dilation,
-                                    bias=bias)
+        self.conv = torch.nn.Conv1d(in_channels, out_channels, kernel_size=kernel_size, stride=stride, padding=padding, 
+        dilation=dilation, bias=bias)
 
         torch.nn.init.xavier_uniform_(
             self.conv.weight, gain=torch.nn.init.calculate_gain(w_init_gain))

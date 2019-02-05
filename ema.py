@@ -8,14 +8,16 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import HTK
+from copy import deepcopy
+from scipy.io import loadmat
 
 def read_data():
-    EmaDir = '../../DataBase/Ankur_C/Neutral/EmaClean/'
-    AliDir = '../../DataBase/Ankur_C/Neutral/ForceAlign/'
-    emafiles = sorted(os.listdir(self.EmaDir))
-    alifiles = sorted(os.listdir(self.AliDir))
-    train_ema = [loadmat(EmaDir+idx) for idx in tqdm_notebook(emafiles)]
-    train_ali = [pd.read_csv(AliDir+idx,header=None) for idx in tqdm_notebook(alifiles)]
+    EmaDir = 'EmaClean/'
+    AliDir = 'ForceAlign/'
+    emafiles = sorted(os.listdir(EmaDir))
+    alifiles = sorted(os.listdir(AliDir))
+    train_ema = [loadmat(EmaDir+idx) for idx in emafiles]
+    train_ali = [pd.read_csv(AliDir+idx,header=None) for idx in alifiles]
 
     return (train_ema, train_ali)
 
@@ -30,28 +32,28 @@ def pre_process(train_ema, train_ali, train = True):
         time_phoneme=[]
         time_sil=[]
 
-        for i in trange(460):
+        for i in range(460):
             phoneme.append(train_ali[i][0].map(lambda x:x.split()))
             
-        for i in trange(460):
+        for i in range(460):
             new_phoneme.append(list(phoneme[i][1:-1].map(lambda x: x[2])))
             time_phoneme.append(list(phoneme[i].map(lambda x: [float(x[0]),float(x[1])])))
             set_phoneme.extend(list(phoneme[i][1:-1].map(lambda x: x[2])))
 
         begin=0
         end=0
-        for i in trange(460):
+        for i in range(460):
             begin=int(float(time_phoneme[i][0][1])*100)
             end=int(float(time_phoneme[i][-1][0])*100)
             time_sil.append([begin,end])
             
-        for i in trange(460):
+        for i in range(460):
             time_phoneme[i]=time_phoneme[i][1:-1]
             
-        for i in trange(460):
+        for i in range(460):
             time_phoneme[i]=(np.multiply(time_phoneme[i],100))
             
-        for i in trange(len(time_phoneme)):
+        for i in range(len(time_phoneme)):
             time_phoneme[i]=list(map(lambda x:int(round(x[1]-x[0])),time_phoneme[i]))
 
         EOS=['</s>']
@@ -69,7 +71,7 @@ def pre_process(train_ema, train_ali, train = True):
         word_to_int=dict((y,x) for x,y in enumerate(set_phoneme))
         int_to_word=dict((x,y) for x,y in enumerate(set_phoneme))
 
-        for i in trange(len(new_phoneme)):
+        for i in range(len(new_phoneme)):
             for j in range(len(new_phoneme[i])):
                 new_phoneme[i][j]=word_to_int[new_phoneme[i][j]]
 
@@ -78,23 +80,23 @@ def pre_process(train_ema, train_ali, train = True):
         set_phoneme=set(set_phoneme)
         maxlen=max([len(new_phoneme[i]) for i in range(len(new_phoneme))])# largest length of a sentence is 62, and it's 331'th  item, which mean"
 
-        for i in trange(np.shape(new_phoneme)[0]):
+        for i in range(np.shape(new_phoneme)[0]):
             for _ in range(maxlen-np.shape(new_phoneme[i])[0]):
                 new_phoneme[i].append(word_to_int[EOS])
 
         embed_phoneme = np.empty((len(set_phoneme),100), dtype=np.float32)
 
-        for i in trange(len(set_phoneme)):
+        for i in range(len(set_phoneme)):
             for j in range(100):
                 embed_phoneme[i][j] = np.random.normal(loc=0, scale=1, size=1)[0]
         
         ema=[]
         new_ema=[]
 
-        for i in trange(460):
+        for i in range(460):
             ema.append(train_ema[i]['EmaData'])
 
-        for i in trange(460):
+        for i in range(460):
             EMA_temp=ema[i]
             EMA_temp=np.transpose(EMA_temp)# time X 18
             Ema_temp2=np.delete(EMA_temp, [4,5,6,7,10,11],1) # time X 12 Supposedly these dimensions of information contains most data.
@@ -118,7 +120,7 @@ def pre_process(train_ema, train_ali, train = True):
         target=[]
 
 
-        for i in trange(460):
+        for i in range(460):
             for j in range(max_len_art -new_ema[i].shape[1]):
                 new_ema[i]=np.concatenate((new_ema[i],putt),axis=1)
             new_ema[i]=np.transpose(new_ema[i])
@@ -163,6 +165,7 @@ def pre_process(train_ema, train_ali, train = True):
 
         dec_len = np.array([])
         enc_len = np.array([])
+        dec_in = np.array([])
 
 
         for i in range(xtrain.shape[0]):
@@ -200,6 +203,9 @@ class train_ema():
     def __getitem__(self, index):
         return self.get_mel_text_pair(self.audiopath_and_text[index])
 
+    def __len__(self):
+        return len(self.audiopath_and_text)
+
 
 
 class test_ema():
@@ -217,6 +223,9 @@ class test_ema():
 
     def __getitem__(self, index):
         return self.get_mel_text_pair(self.audiopath_and_text[index])
+    
+    def __len__(self):
+        return len(self.audiopaths_and_text)
 
 
 

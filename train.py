@@ -58,7 +58,6 @@ def prepare_dataloaders(hparams):
 
 
     train_loader = DataLoader(trainset, num_workers=1, shuffle=False, batch_size = hparams.batch_size, pin_memory=False, drop_last=True)
-    test_loader = DataLoader(valset,  num_workers=1, shuffle=False, batch_size=hparams.batch_size, pin_memory=False, drop_last=True)
 
     return train_loader, valset
 
@@ -116,15 +115,14 @@ def save_checkpoint(model, optimizer, learning_rate, iteration, filepath):
                 'learning_rate': learning_rate}, filepath)
 
 
-def validate(model, criterion, valset, iteration, batch_size, n_gpus,
-             collate_fn, logger, distributed_run, rank):
+def validate(model, criterion, valset, iteration, batch_size, n_gpus, logger, distributed_run, rank):
     """Handles all the validation scoring and printing"""
     model.eval()
     with torch.no_grad():
         val_sampler = DistributedSampler(valset) if distributed_run else None
         val_loader = DataLoader(valset, sampler=val_sampler, num_workers=1,
                                 shuffle=False, batch_size=batch_size,
-                                pin_memory=False, collate_fn=collate_fn)
+                                pin_memory=False)
 
         val_loss = 0.0
         for i, batch in enumerate(val_loader):
@@ -179,7 +177,7 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
     logger = prepare_directories_and_logger(
         output_directory, log_directory, rank)
 
-    train_loader, valset, collate_fn = prepare_dataloaders(hparams)
+    train_loader, valset = prepare_dataloaders(hparams)
 
     # Load checkpoint if one exists
     iteration = 0
@@ -235,7 +233,7 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
 
             if not overflow and (iteration % hparams.iters_per_checkpoint == 0):
                 validate(model, criterion, valset, iteration,
-                         hparams.batch_size, n_gpus, collate_fn, logger,
+                         hparams.batch_size, n_gpus, logger,
                          hparams.distributed_run, rank)
                 if rank == 0:
                     checkpoint_path = os.path.join(
