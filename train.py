@@ -36,7 +36,7 @@ def reduce_tensor(tensor, n_gpus):
     return rt
 
 
-def init_distributed(hparams, n_gpus, rank, group_name):
+def init_distributed(hparams, n_pus, rank, group_name):
     assert torch.cuda.is_available(), "Distributed mode requires CUDA."
     print("Initializing Distributed")
 
@@ -223,6 +223,15 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
             optimizer.step()
 
             overflow = optimizer.overflow if hparams.fp16_run else False
+
+            if overflow:
+                print("Case of Overflow")
+            if math.isnan(reduced_loss):
+                print("Case of reduced loss")
+            
+            print("This is rank", rank)
+            if rank==0:
+                print("Case of rank not equal to zero")
 
             if not overflow and not math.isnan(reduced_loss) and rank == 0:
                 duration = time.perf_counter() - start

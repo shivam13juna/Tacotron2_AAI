@@ -19,21 +19,24 @@ def read_data():
     train_ema = [loadmat(EmaDir+idx) for idx in emafiles]
     train_ali = [pd.read_csv(AliDir+idx,header=None) for idx in alifiles]
 
-    return (train_ema, train_ali)
+    return (train_ali, train_ema)
 
 
-def pre_process(train_ema, train_ali, train = True):
+def pre_process(train_ali, train_ema, train = True):
         # train_ema = self.train_ema
         # train_ali = self.train_ali
-
+        print("This is length of phoneme in pre_process", len(train_ali))
         phoneme=[]
         new_phoneme=[]
         set_phoneme=[]
         time_phoneme=[]
         time_sil=[]
+    
+        # for i in range(460):
+        print(i)
+        phoneme.append(train_ali[i][0].map(lambda x:x.split()))
 
-        for i in range(460):
-            phoneme.append(train_ali[i][0].map(lambda x:x.split()))
+        print("Basic Phoneme structure created, checking again")
             
         for i in range(460):
             new_phoneme.append(list(phoneme[i][1:-1].map(lambda x: x[2])))
@@ -74,7 +77,7 @@ def pre_process(train_ema, train_ali, train = True):
         for i in range(len(new_phoneme)):
             for j in range(len(new_phoneme[i])):
                 new_phoneme[i][j]=word_to_int[new_phoneme[i][j]]
-
+        print("Phonemes converted to word indices")
         copy_phoneme = deepcopy(new_phoneme)     
 
         set_phoneme=set(set_phoneme)
@@ -181,51 +184,61 @@ def pre_process(train_ema, train_ali, train = True):
         dec_in = dec_in.reshape((xtrain.shape[0], -1 , 12))
 
         if train:
+            print("Returning train")
             return [xtrain, xtarget]
         else:
+            print("Returning target")
             return [ttrain, ttarget]
 
 
 
-class train_ema():
+class train_ema(torch.utils.data.Dataset):
     def __init__(self):
-        self.train_ema, self.train_ali = read_data()
-        self.audiopath_and_text = pre_process(self.train_ema, self.train_ali)
+        # self.train_ema, self.train_ali = read_data()
+        self.phoneme, self.ema = read_data()
+        # print("Data imported, from read_data into audiopath, sample length can be", len(self.phoneme[0]))
+        # print("And that phoneme is", self.phoneme[0])
 
         
     
 
-    def get_mel_text_pair(self, audiopath_and_text, index):
+    def get_mel_text_pair(self, phoneme, ema):
         # separate filename and text
-        phoneme, ema = audiopath_and_text[0], audiopath_and_text[1]
-        return (phoneme, ema)   
+        
+        phoneme, ema = pre_process(phoneme, ema, train=False)
+        return (phoneme, ema)
 
     def __getitem__(self, index):
-        return self.get_mel_text_pair(self.audiopath_and_text[index])
+        print("is this even getting executed")
+        return self.get_mel_text_pair(self.phoneme[index], self.ema[index])
 
     def __len__(self):
-        return len(self.audiopath_and_text)
+        return len(self.phoneme)
 
 
 
-class test_ema():
+class test_ema(torch.utils.data.Dataset):
     def __init__(self):
-        self.test_ema, self.test_ali = read_data()
-        self.audiopath_and_text = pre_process(self.test_ema, self.test_ali, train=False)
-
+            # self.train_ema, self.train_ali = read_data()
+        self.phoneme, self.ema = read_data()
+        print("Data imported, from read_data into audiopath, sample length can be", len(self.phoneme[0]))
+    
         
     
 
-    def get_mel_text_pair(self, audiopath_and_text, index):
+    def get_mel_text_pair(self, phoneme, ema):
         # separate filename and text
-        phoneme, ema = audiopath_and_text[0], audiopath_and_text[1]
-        return (phoneme, ema)   
+        
+        phoneme, ema = pre_process(phoneme, ema, train=False)
+        return (phoneme, ema)
 
     def __getitem__(self, index):
-        return self.get_mel_text_pair(self.audiopath_and_text[index])
-    
+        print("is this even getting executed")
+        return self.get_mel_text_pair(self.phoneme[index], self.ema[index])
+
     def __len__(self):
-        return len(self.audiopaths_and_text)
+        return len(self.phoneme)
+    
 
 
 
