@@ -85,9 +85,9 @@ def pre_process(index, train = True):
 
 
         if train:
-            return [train_new_phoneme[index], train_new_ema[index]]
+            return [train_new_phoneme[index], train_new_ema[index], train_phoneme_len[index], train_ema_len[index]]
         else:
-            return [test_new_phoneme[index], test_new_ema[index]]
+            return [test_new_phoneme[index], test_new_ema[index], test_phoneme_len[index], test_ema_len[index]]
 
 
 
