@@ -69,6 +69,21 @@ def pre_process(index, train = True):
         with open('variables/test_new_phoneme', 'rb') as handle:
             test_new_phoneme = pickle.loads(handle.read())
 
+        with open('variables/train_ema_len', 'rb') as handle:
+            train_ema_len = pickle.loads(handle.read())
+
+        with open('variables/test_ema_len', 'rb') as handle:
+            test_ema_len = pickle.loads(handle.read())
+
+        with open('variables/train_phoneme_len', 'rb') as handle:
+            train_phoneme_len = pickle.loads(handle.read())
+
+        with open('variables/test_phoneme_len', 'rb') as handle:
+            test_phoneme_len = pickle.loads(handle.read())
+
+
+
+
         if train:
             return [train_new_phoneme[index], train_new_ema[index]]
         else:
