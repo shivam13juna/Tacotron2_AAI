@@ -4,8 +4,11 @@ import torch
 
 
 def get_mask_from_lengths(lengths):
+    # print(lengths)
     max_len = torch.max(lengths).item()
+    # print("maxlen is: ", max_len)
     ids = torch.arange(0, max_len, out=torch.cuda.LongTensor(max_len))
+    # print("ids is: ", ids)
     mask = (ids < lengths.unsqueeze(1)).byte()
     return mask
 
@@ -22,7 +25,14 @@ def load_filepaths_and_text(filename, split="|"):
 
 
 def to_gpu(x):
-    x = torch.from_numpy(x)
+    try:
+        x = torch.from_numpy(x)
+
+    #do something
+
+    except:
+        TypeError
+
     x = x.contiguous()
 
     if torch.cuda.is_available():

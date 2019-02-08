@@ -61,7 +61,7 @@ def prepare_dataloaders(hparams):
     train_loader = DataLoader(trainset, num_workers=1, shuffle=False, batch_size = hparams.batch_size, pin_memory=False,collate_fn=collate_fn)
 
 
-    return train_loader, valset
+    return train_loader, valset, collate_fn
 
 
 def prepare_directories_and_logger(output_directory, log_directory, rank):
@@ -117,13 +117,13 @@ def save_checkpoint(model, optimizer, learning_rate, iteration, filepath):
                 'learning_rate': learning_rate}, filepath)
 
 
-def validate(model, criterion, valset, iteration, batch_size, n_gpus, logger, distributed_run, rank):
+def validate(model, criterion, valset, iteration, batch_size, n_gpus, collate_fn, logger, distributed_run, rank):
     """Handles all the validation scoring and printing"""
     model.eval()
     with torch.no_grad():
         val_sampler = DistributedSampler(valset) if distributed_run else None
         val_loader = DataLoader(valset, sampler=val_sampler, num_workers=1,
-                                shuffle=False, batch_size=batch_size,
+                                shuffle=False, batch_size=batch_size, collate_fn=collate_fn,
                                 pin_memory=False)
 
         val_loss = 0.0
@@ -179,7 +179,7 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
     logger = prepare_directories_and_logger(
         output_directory, log_directory, rank)
 
-    train_loader, valset = prepare_dataloaders(hparams)
+    train_loader, valset, collate_fn = prepare_dataloaders(hparams)
 
     # Load checkpoint if one exists
     iteration = 0
@@ -226,14 +226,14 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
 
             overflow = optimizer.overflow if hparams.fp16_run else False
 
-            if overflow:
-                print("Case of Overflow")
-            if math.isnan(reduced_loss):
-                print("Case of reduced loss")
+            # if overflow:
+            #     print("Case of Overflow")
+            # if math.isnan(reduced_loss):
+            #     print("Case of reduced loss")
             
-            print("This is rank", rank)
-            if rank==0:
-                print("Case of rank not equal to zero")
+            # print("This is rank", rank)
+            # if rank==0:
+            #     print("Case of rank not equal to zero")
 
             if not overflow and not math.isnan(reduced_loss) and rank == 0:
                 duration = time.perf_counter() - start
@@ -242,15 +242,15 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
                 logger.log_training(
                     reduced_loss, grad_norm, learning_rate, duration, iteration)
 
-            if not overflow and (iteration % hparams.iters_per_checkpoint == 0):
-                validate(model, criterion, valset, iteration,
-                         hparams.batch_size, n_gpus, logger,
-                         hparams.distributed_run, rank)
-                if rank == 0:
-                    checkpoint_path = os.path.join(
-                        output_directory, "checkpoint_{}".format(iteration))
-                    save_checkpoint(model, optimizer, learning_rate, iteration,
-                                    checkpoint_path)
+            # if not overflow and (iteration % hparams.iters_per_checkpoint == 0):
+            #     validate(model, criterion, valset, iteration,
+            #              hparams.batch_size, n_gpus, logger,collate_fn,
+            #              hparams.distributed_run, rank)
+            #     if rank == 0:
+            #         checkpoint_path = os.path.join(
+            #             output_directory, "checkpoint_{}".format(iteration))
+            #         save_checkpoint(model, optimizer, learning_rate, iteration,
+            #                         checkpoint_path)
 
             iteration += 1
 
