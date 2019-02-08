@@ -1,6 +1,6 @@
 
 
-# These programs are modification to existing TACOTRON 2 from NVIDIA, purpose of these modification was to feed in phonemes and get EMA trajectory from the model, without giving in any time related information
+### These programs are modification to existing TACOTRON 2 from NVIDIA, purpose of these modification was to feed in phonemes and get EMA trajectory from the model, without giving in any time related information
 
 Program initially is being trained with one test subject, ANKUR. We've 460 sentences from MOCHA TIMIT from USC. So we feed in phoneme, with maximum padded length, which is 60. And we expect output EMA which are of maximum length 466. 
 
