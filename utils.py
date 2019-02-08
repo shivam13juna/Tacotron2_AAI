@@ -22,6 +22,7 @@ def load_filepaths_and_text(filename, split="|"):
 
 
 def to_gpu(x):
+    x = torch.from_numpy(x)
     x = x.contiguous()
 
     if torch.cuda.is_available():

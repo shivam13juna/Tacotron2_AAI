@@ -12,17 +12,6 @@ from copy import deepcopy
 from scipy.io import loadmat
 import pickle
 
-def read_data():
-    EmaDir = 'EmaClean/'
-    AliDir = 'ForceAlign/'
-    emafiles = sorted(os.listdir(EmaDir))
-    alifiles = sorted(os.listdir(AliDir))
-    train_ema = [loadmat(EmaDir+idx) for idx in emafiles]
-    train_ali = [pd.read_csv(AliDir+idx,header=None) for idx in alifiles]
-
-    return (train_ali, train_ema)
-count = 0
-
 
 def pre_process(index, train = True):
         # train_ema = self.train_ema
@@ -85,34 +74,23 @@ def pre_process(index, train = True):
 
 
         if train:
-            return [train_new_phoneme[index], train_new_ema[index], train_phoneme_len[index], train_ema_len[index]]
+            return (train_new_phoneme[index],  train_phoneme_len[index], train_new_ema[index], train_ema_len[index])
         else:
-            return [test_new_phoneme[index], test_new_ema[index], test_phoneme_len[index], test_ema_len[index]]
+            return (test_new_phoneme[index], test_phoneme_len[index], test_new_ema[index], test_ema_len[index])
 
 
 
 
 class train_ema(torch.utils.data.Dataset):
-    def __init__(self):
-        # self.train_ema, self.train_ali = read_data()
-        self.phoneme, self.ema = read_data()
-        # print("Data imported, from read_data into audiopath, sample length can be", len(self.phoneme[0]))
-        # print("And that phoneme is", self.phoneme[0])
-
-        
-    
 
     def get_mel_text_pair(self, index):
         # separate filename and text
         
-        phoneme, ema = pre_process(index, train=True)
-        return (phoneme, ema)
+        text_padded, input_lengths, mel_padded , output_lengths = pre_process(index)
+        return (np.array(text_padded), np.array(input_lengths), np.array(mel_padded) , np.array(output_lengths))
 
     def __getitem__(self, index):
-        global count
-        
-        # print("is this even getting executed", count)
-        count+=1
+   
         return self.get_mel_text_pair(index)
 
     def __len__(self):
@@ -122,32 +100,89 @@ class train_ema(torch.utils.data.Dataset):
 
 class test_ema(torch.utils.data.Dataset):
 
-    def __init__(self):
-        # self.train_ema, self.train_ali = read_data()
-        self.phoneme, self.ema = read_data()
-        # print("Data imported, from read_data into audiopath, sample length can be", len(self.phoneme[0]))
-        # print("And that phoneme is", self.phoneme[0])
-
-        
-    
-
     def get_mel_text_pair(self, index):
         # separate filename and text
         
-        phoneme, ema = pre_process(index, train=False)
-        return (phoneme, ema)
+        text_padded, input_lengths, mel_padded , output_lengths = pre_process(index, train=False)
+        return (np.array(text_padded), np.array(input_lengths), np.array(mel_padded) , np.array(output_lengths))
+
 
     def __getitem__(self, index):
-        global count
-        
-        # print("is this even getting executed", count)
-        count+=1
+     
         return self.get_mel_text_pair(index)
     
 
     def __len__(self):
         return 60
     
+
+
+class TextMelCollate():
+    """ Zero-pads model inputs and targets based on number of frames per setep
+    """
+    def __init__(self, n_frames_per_step):
+        self.n_frames_per_step = n_frames_per_step
+
+    def __call__(self, batch):
+        """Collate's training batch from normalized text and mel-spectrogram
+        PARAMS
+        ------
+        batch: [text_normalized, mel_normalized]
+        """
+
+        text_padded, input_lengths, mel_padded , output_lengths = ([] for i in range(4))
+
+
+        for i in range(len(batch)):
+            text_padded.append(batch[i][0])
+            input_lengths.append(batch[i][1])
+            mel_padded.append(batch[i][2])
+            output_lengths.append(batch[i][3])
+            print(input_lengths)
+        # Right zero-pad all one-hot text sequences to max input length
+        id_ph = np.argsort(input_lengths)[::-1]
+        id_ema = np.argsort(output_lengths)[::-1]
+        
+        text_padded = np.array(text_padded)
+        text_padded = text_padded[id_ph]
+        
+        input_lengths = np.array(input_lengths)
+        input_lengths = input_lengths[id_ph]
+
+        mel_padded = np.array(mel_padded)
+        mel_padded = mel_padded[id_ema]
+
+        output_lengths = np.array(output_lengths)
+        output_lengths = output_lengths[id_ema]
+        max_input_len = 60
+
+        # text_padded = torch.LongTensor(len(batch), max_input_len)
+        # text_padded.zero_()
+        # for i in range(len(ids_sorted_decreasing)):
+        #     text = batch[ids_sorted_decreasing[i]][0]
+        #     text_padded[i, :text.size(0)] = text
+
+        # # Right zero-pad mel-spec
+        # num_mels = batch[0][1].size(0)
+        # max_target_len = max([x[1].size(1) for x in batch])
+        # if max_target_len % self.n_frames_per_step != 0:
+        #     max_target_len += self.n_frames_per_step - max_target_len % self.n_frames_per_step
+        #     assert max_target_len % self.n_frames_per_step == 0
+
+        # # include mel padded and gate padded
+        # mel_padded = torch.FloatTensor(len(batch), num_mels, max_target_len)
+        # mel_padded.zero_()
+        # gate_padded = torch.FloatTensor(len(batch), max_target_len)
+        # gate_padded.zero_()
+        # output_lengths = torch.LongTensor(len(batch))
+        # for i in range(len(ids_sorted_decreasing)):
+        #     mel = batch[ids_sorted_decreasing[i]][1]
+        #     mel_padded[i, :, :mel.size(1)] = mel
+        #     gate_padded[i, mel.size(1)-1:] = 1
+        #     output_lengths[i] = mel.size(1)
+
+        return text_padded, input_lengths, mel_padded, \
+            output_lengths
 
 
 

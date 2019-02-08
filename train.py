@@ -14,7 +14,7 @@ from fp16_optimizer import FP16_Optimizer
 
 from model import Tacotron2
 from data_utils import TextMelLoader, TextMelCollate
-from ema import train_ema, test_ema
+from ema import train_ema, test_ema, TextMelCollate
 from loss_function import Tacotron2Loss
 from logger import Tacotron2Logger
 from hparams import create_hparams
@@ -57,7 +57,9 @@ def prepare_dataloaders(hparams):
     valset = test_ema()
 
 
-    train_loader = DataLoader(trainset, num_workers=1, shuffle=False, batch_size = hparams.batch_size, pin_memory=False, drop_last=True)
+    collate_fn = TextMelCollate(hparams.n_frames_per_step)
+    train_loader = DataLoader(trainset, num_workers=1, shuffle=False, batch_size = hparams.batch_size, pin_memory=False,collate_fn=collate_fn)
+
 
     return train_loader, valset
 
@@ -255,9 +257,9 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-o', '--output_directory', type=str,
+    parser.add_argument('-o', '--output_directory',default="waveglow" ,type=str,
                         help='directory to save checkpoints')
-    parser.add_argument('-l', '--log_directory', type=str,
+    parser.add_argument('-l', '--log_directory',default="logdir", type=str,
                         help='directory to save tensorboard logs')
     parser.add_argument('-c', '--checkpoint_path', type=str, default=None,
                         required=False, help='checkpoint path')
