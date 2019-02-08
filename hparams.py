@@ -36,7 +36,7 @@ def create_hparams(hparams_string=None, verbose=False):
         filter_length=1024,
         hop_length=256,
         win_length=1024,
-        n_mel_channels=12, #I'm thinking it's no of outcomes, not sure if that's what it really means
+        n_mel_channels=466, # It meant as maximum length of ema output frame(I'm thinking it's no of outcomes, not sure if that's what it really means)
         mel_fmin=0.0,
         mel_fmax=8000.0,
 

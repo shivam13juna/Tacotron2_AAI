@@ -138,7 +138,7 @@ class TextMelCollate():
             input_lengths.append(batch[i][1])
             mel_padded.append(batch[i][2])
             output_lengths.append(batch[i][3])
-            print(input_lengths)
+            # print(input_lengths)
         # Right zero-pad all one-hot text sequences to max input length
         id_ph = np.argsort(input_lengths)[::-1]
         id_ema = np.argsort(output_lengths)[::-1]
