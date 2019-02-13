@@ -66,10 +66,11 @@ def prepare_dataloaders(hparams):
 
 def prepare_directories_and_logger(output_directory, log_directory, rank):
     if rank == 0:
+        # print("Is this getting executed?")
         if not os.path.isdir(output_directory):
             os.makedirs(output_directory)
             os.chmod(output_directory, 0o775)
-        logger = Tacotron2Logger(os.path.join(output_directory, log_directory))
+        logger = Tacotron2Logger(log_directory)
     else:
         logger = None
     return logger
@@ -141,13 +142,12 @@ def validate(model, criterion, valset, iteration, batch_size, n_gpus, collate_fn
     model.train()
     if rank == 0:
         print("Validation loss {}: {:9f}  ".format(iteration, reduced_val_loss))
-        logger.log_validation(reduced_val_loss, model, y, y_pred, iteration)
+        # logger.log_validation(reduced_val_loss, model, y, y_pred, iteration)
 
 
 def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
           rank, group_name, hparams):
     """Training and validation logging results to tensorboard and stdout
-
     Params
     ------
     output_directory (string): directory to save checkpoints
@@ -226,15 +226,6 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
 
             overflow = optimizer.overflow if hparams.fp16_run else False
 
-            # if overflow:
-            #     print("Case of Overflow")
-            # if math.isnan(reduced_loss):
-            #     print("Case of reduced loss")
-            
-            # print("This is rank", rank)
-            # if rank==0:
-            #     print("Case of rank not equal to zero")
-
             if not overflow and not math.isnan(reduced_loss) and rank == 0:
                 duration = time.perf_counter() - start
                 print("Train loss {} {:.6f} Grad Norm {:.6f} {:.2f}s/it".format(
@@ -244,22 +235,24 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
 
             if not overflow and (iteration % hparams.iters_per_checkpoint == 0):
                 validate(model, criterion, valset, iteration,
-                         hparams.batch_size, n_gpus, logger,collate_fn,
+                         hparams.batch_size, n_gpus, collate_fn, logger,
                          hparams.distributed_run, rank)
                 if rank == 0:
-                    checkpoint_path = os.path.join(output_directory, "checkpoint_{}".format(iteration))
-                    save_checkpoint(model, optimizer, learning_rate, iteration, checkpoint_path)
+                    checkpoint_path = os.path.join(
+                        output_directory, "checkpoint_{}".format(iteration))
+                    save_checkpoint(model, optimizer, learning_rate, iteration,
+                                    checkpoint_path)
 
             iteration += 1
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-o', '--output_directory',default="waveglow" ,type=str,
+    parser.add_argument('-o', '--output_directory',default='waveglow' ,type=str,
                         help='directory to save checkpoints')
-    parser.add_argument('-l', '--log_directory',default="logdir", type=str,
+    parser.add_argument('-l', '--log_directory', default='logdir',type=str,
                         help='directory to save tensorboard logs')
-    parser.add_argument('-c', '--checkpoint_path', type=str, default=None,
+    parser.add_argument('-c', '--checkpoint_path', default='waveglow/checkpoint_9500', type=str, 
                         required=False, help='checkpoint path')
     parser.add_argument('--warm_start', action='store_true',
                         help='load the model only (warm start)')
@@ -269,8 +262,7 @@ if __name__ == '__main__':
                         required=False, help='rank of current gpu')
     parser.add_argument('--group_name', type=str, default='group_name',
                         required=False, help='Distributed group name')
-    parser.add_argument('--hparams', type=str,
-                        required=False, help='comma separated name=value pairs')
+    parser.add_argument('--hparams', type=str, required=False, help='comma separated name=value pairs')
 
     args = parser.parse_args()
     hparams = create_hparams(args.hparams)
