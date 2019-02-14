@@ -532,6 +532,7 @@ class Tacotron2(nn.Module):
             output_lengths)
 
     def inference(self, inputs):
+        print("is this getting executed")
         inputs = self.parse_input(inputs)
         embedded_inputs = self.embedding(inputs).transpose(1, 2)
         encoder_outputs = self.encoder.inference(embedded_inputs)
