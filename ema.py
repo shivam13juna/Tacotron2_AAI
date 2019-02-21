@@ -14,11 +14,11 @@ import pickle
 
 
 def pre_process(index, train = True):
-        # train_ema = self.train_ema
-        # train_ali = self.train_ali
-        # print("This is length of phoneme in pre_process", len(train_ali))
-        # phoneme=[]
-        # new_phoneme=[]
+        train_ema = self.train_ema
+        train_ali = self.train_ali
+        print("This is length of phoneme in pre_process", len(train_ali))
+        phoneme=[]
+        new_phoneme=[]
         with open('variables/new_phoneme', 'rb') as handle:
             new_phoneme = pickle.loads(handle.read())
         
