@@ -10,6 +10,6 @@ class Tacotron2Loss(nn.Module):
         mel_target.requires_grad = False
 
         mel_out, mel_out_postnet, _ = model_output
-        mel_loss = nn.MSELoss()(mel_out, mel_target) + \
-            nn.MSELoss()(mel_out_postnet, mel_target)
+        mel_loss = nn.L1Loss()(mel_out, mel_target) + \
+            nn.L1Loss()(mel_out_postnet, mel_target)
         return mel_loss

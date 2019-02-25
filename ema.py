@@ -135,22 +135,20 @@ class train_ema:
 
 
 
-        EOS=['</s>']
-        SOS=['<s>']
+    
         zero='0'
-        set_phoneme.extend(EOS)
-        set_phoneme.extend(SOS)
-        set_phoneme.extend(zero)
+  
         EOS='</s>'
         SOS='<s>'
 
-        set_phoneme=set(set_phoneme)
+ 
+        # word_to_int={}
+        # int_to_word={}
 
-        word_to_int={}
-        int_to_word={}
-
-        word_to_int=dict((y,x) for x,y in enumerate(set_phoneme))
-        int_to_word=dict((x,y) for x,y in enumerate(set_phoneme))
+        # word_to_int=dict((y,x) for x,y in enumerate(set_phoneme))
+        # int_to_word=dict((x,y) for x,y in enumerate(set_phoneme))
+        with open('variables/word_to_int', 'rb') as handle:
+            word_to_int = pickle.loads(handle.read())
 
         for i in range(len(new_phoneme)):
             for j in range(len(new_phoneme[i])):
@@ -163,7 +161,7 @@ class train_ema:
 
         for i in range(np.shape(new_phoneme)[0]):
             for _ in range(maxlen-np.shape(new_phoneme[i])[0]):
-                new_phoneme[i].append(word_to_int[EOS])
+                new_phoneme[i].append(0)
         self.train_new_phoneme = new_phoneme[0:400]
         self.test_new_phoneme = new_phoneme[400:]
 
@@ -180,7 +178,7 @@ class train_ema:
             MeanOfData=np.mean(Ema_temp2,axis=0) 
             Ema_temp2-=MeanOfData
             C=np.sqrt(np.mean(np.square(Ema_temp2),axis=0))
-            Ema=Ema_temp2#np.divide(Ema_temp2,C) # Mean remov & var normailized
+            Ema=np.divide(Ema_temp2,C) # Mean remov & var normailized
             [aE,bE]=Ema.shape
             new_ema.append(Ema)
 
@@ -192,7 +190,7 @@ class train_ema:
 
         max_len_art=max([new_ema[i].shape[1] for i in range(460)]) #Value is 466, which happens to be the same value 
         
-        putt=np.full((12, 1), 0)
+        putt=np.full((12, 1), word_to_int[EOS])
         dec_ema=new_ema.copy()
 
 
@@ -217,6 +215,31 @@ class train_ema:
 
         self.train_ema_len = dec_len[0:400]
         self.test_ema_len = dec_len[400:]
+
+        with open('train_phoneme_len', 'wb') as handle:  
+            pickle.dump(self.train_phoneme_len, handle) 
+
+        with open('test_phoneme_len', 'wb') as handle:  
+            pickle.dump(self.test_phoneme_len, handle) 
+
+        with open('train_new_ema', 'wb') as handle:  
+            pickle.dump(self.train_new_ema, handle) 
+
+        with open('test_new_ema', 'wb') as handle:  
+            pickle.dump(self.test_new_ema, handle) 
+
+        with open('train_ema_len', 'wb') as handle:  
+            pickle.dump(self.train_ema_len, handle) 
+
+        with open('test_ema_len', 'wb') as handle:  
+            pickle.dump(self.test_ema_len, handle) 
+
+        with open('train_new_phoneme', 'wb') as handle:  
+            pickle.dump(self.train_new_phoneme, handle) 
+
+        with open('test_new_phoneme', 'wb') as handle:  
+            pickle.dump(self.test_new_phoneme, handle) 
+
 
     def get_mel_text_pair(self, index):
         # separate filename and text
@@ -277,22 +300,16 @@ class test_ema:
 
 
 
-        EOS=['</s>']
-        SOS=['<s>']
         zero='0'
-        set_phoneme.extend(EOS)
-        set_phoneme.extend(SOS)
-        set_phoneme.extend(zero)
         EOS='</s>'
         SOS='<s>'
 
-        set_phoneme=set(set_phoneme)
+     
 
-        word_to_int={}
-        int_to_word={}
+        with open('variables/word_to_int', 'rb') as handle:
+            word_to_int = pickle.loads(handle.read())
 
-        word_to_int=dict((y,x) for x,y in enumerate(set_phoneme))
-        int_to_word=dict((x,y) for x,y in enumerate(set_phoneme))
+
 
         for i in range(len(new_phoneme)):
             for j in range(len(new_phoneme[i])):
@@ -305,7 +322,7 @@ class test_ema:
 
         for i in range(np.shape(new_phoneme)[0]):
             for _ in range(maxlen-np.shape(new_phoneme[i])[0]):
-                new_phoneme[i].append(word_to_int[EOS])
+                new_phoneme[i].append(0)
         self.train_new_phoneme = new_phoneme[0:400]
         self.test_new_phoneme = new_phoneme[400:]
 
@@ -322,7 +339,7 @@ class test_ema:
             MeanOfData=np.mean(Ema_temp2,axis=0) 
             Ema_temp2-=MeanOfData
             C=np.sqrt(np.mean(np.square(Ema_temp2),axis=0))
-            Ema=Ema_temp2#np.divide(Ema_temp2,C) # Mean remov & var normailized
+            Ema=np.divide(Ema_temp2,C) # Mean remov & var normailized
             [aE,bE]=Ema.shape
             new_ema.append(Ema)
 
@@ -334,7 +351,7 @@ class test_ema:
 
         max_len_art=max([new_ema[i].shape[1] for i in range(460)]) #Value is 466, which happens to be the same value 
         
-        putt=np.full((12, 1), 0)
+        putt=np.full((12, 1), word_to_int[EOS])
         dec_ema=new_ema.copy()
 
 
@@ -358,7 +375,31 @@ class test_ema:
         self.test_phoneme_len = enc_len[400:]
 
         self.train_ema_len = dec_len[0:400]
-        self.test_ema_len = dec_len[400:]   
+        self.test_ema_len = dec_len[400:]  
+
+        # with open('train_phoneme_len', 'wb') as handle:  
+        #     pickle.dump(self.train_phoneme_len, handle) 
+
+        # with open('test_phoneme_len', 'wb') as handle:  
+        #     pickle.dump(self.test_phoneme_len, handle) 
+
+        # with open('train_new_ema', 'wb') as handle:  
+        #     pickle.dump(self.train_new_ema, handle) 
+
+        # with open('test_new_ema', 'wb') as handle:  
+        #     pickle.dump(self.test_new_ema, handle) 
+
+        # with open('train_ema_len', 'wb') as handle:  
+        #     pickle.dump(self.train_ema_len, handle) 
+
+        # with open('test_ema_len', 'wb') as handle:  
+        #     pickle.dump(self.test_ema_len, handle) 
+
+        # with open('train_new_phoneme', 'wb') as handle:  
+        #     pickle.dump(self.train_new_phoneme, handle) 
+
+        # with open('test_new_phoneme', 'wb') as handle:  
+        #     pickle.dump(self.test_new_phoneme, handle) 
 
     def get_mel_text_pair(self, index):
         # separate filename and text

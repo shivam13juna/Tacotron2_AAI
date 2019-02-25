@@ -253,7 +253,7 @@ if __name__ == '__main__':
     parser.add_argument('-l', '--log_directory', default='logdir',type=str,
                         help='directory to save tensorboard logs')
     parser.add_argument('-c', '--checkpoint_path', type=str, 
-                        required=False, help='checkpoint path')#, default='waveglow/checkpoint_25200')
+                        required=False, help='checkpoint path')#, default='waveglow/checkpoint_38000')
     parser.add_argument('--warm_start', action='store_true',
                         help='load the model only (warm start)')
     parser.add_argument('--n_gpus', type=int, default=1,
