@@ -216,28 +216,28 @@ class train_ema:
         self.train_ema_len = dec_len[0:400]
         self.test_ema_len = dec_len[400:]
 
-        with open('train_phoneme_len', 'wb') as handle:  
+        with open('new_var/train_phoneme_len', 'wb') as handle:  
             pickle.dump(self.train_phoneme_len, handle) 
 
-        with open('test_phoneme_len', 'wb') as handle:  
+        with open('new_var/test_phoneme_len', 'wb') as handle:  
             pickle.dump(self.test_phoneme_len, handle) 
 
-        with open('train_new_ema', 'wb') as handle:  
+        with open('new_var/train_new_ema', 'wb') as handle:  
             pickle.dump(self.train_new_ema, handle) 
 
-        with open('test_new_ema', 'wb') as handle:  
+        with open('new_var/test_new_ema', 'wb') as handle:  
             pickle.dump(self.test_new_ema, handle) 
 
-        with open('train_ema_len', 'wb') as handle:  
+        with open('new_var/train_ema_len', 'wb') as handle:  
             pickle.dump(self.train_ema_len, handle) 
 
-        with open('test_ema_len', 'wb') as handle:  
+        with open('new_var/test_ema_len', 'wb') as handle:  
             pickle.dump(self.test_ema_len, handle) 
 
-        with open('train_new_phoneme', 'wb') as handle:  
+        with open('new_var/train_new_phoneme', 'wb') as handle:  
             pickle.dump(self.train_new_phoneme, handle) 
 
-        with open('test_new_phoneme', 'wb') as handle:  
+        with open('new_var/test_new_phoneme', 'wb') as handle:  
             pickle.dump(self.test_new_phoneme, handle) 
 
 
