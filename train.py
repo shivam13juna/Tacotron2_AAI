@@ -248,12 +248,12 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-o', '--output_directory',default='waveglow' ,type=str,
+    parser.add_argument('-o', '--output_directory',default='checkpoints' ,type=str,
                         help='directory to save checkpoints')
     parser.add_argument('-l', '--log_directory', default='logdir',type=str,
                         help='directory to save tensorboard logs')
     parser.add_argument('-c', '--checkpoint_path', type=str, 
-                        required=False, help='checkpoint path', default='waveglow/checkpoint_20000')
+                        required=False, help='checkpoint path')#, default='waveglow/checkpoint_20000')
     parser.add_argument('--warm_start', action='store_true',
                         help='load the model only (warm start)')
     parser.add_argument('--n_gpus', type=int, default=1,
