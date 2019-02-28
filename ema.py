@@ -190,7 +190,7 @@ class train_ema:
 
         max_len_art=max([new_ema[i].shape[1] for i in range(460)]) #Value is 466, which happens to be the same value 
         
-        putt=np.full((12, 1), 0.0)
+        putt=np.full((12, 1), -10.0)
         dec_ema=new_ema.copy()
 
 
@@ -351,7 +351,7 @@ class test_ema:
 
         max_len_art=max([new_ema[i].shape[1] for i in range(460)]) #Value is 466, which happens to be the same value 
         
-        putt=np.full((12, 1), 0.0)
+        putt=np.full((12, 1), -10.0)
         dec_ema=new_ema.copy()
 
 
