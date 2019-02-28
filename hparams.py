@@ -53,7 +53,7 @@ def create_hparams(hparams_string=None, verbose=False):
 
         # Decoder parameters
         n_frames_per_step=1,  # currently only 1 is supported
-        decoder_rnn_dim=256,
+        decoder_rnn_dim=128,
         prenet_dim=64,
         max_decoder_steps=12,
         gate_threshold=0.5,
@@ -61,12 +61,12 @@ def create_hparams(hparams_string=None, verbose=False):
         p_decoder_dropout=0.1,
 
         # Attention parameters
-        attention_rnn_dim=256,
-        attention_dim=128,
+        attention_rnn_dim=128,
+        attention_dim=64,
 
         # Location Layer parameters
-        attention_location_n_filters=42,
-        attention_location_kernel_size=41,
+        attention_location_n_filters=32,
+        attention_location_kernel_size=31,
 
         # Mel-post processing network parameters
         postnet_embedding_dim=64,
