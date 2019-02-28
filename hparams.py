@@ -10,7 +10,7 @@ def create_hparams(hparams_string=None, verbose=False):
         # Experiment Parameters        #
         ################################
         epochs=300000,
-        iters_per_checkpoint=1000,
+        iters_per_checkpoint=5000,
         seed=1234,
         dynamic_loss_scaling=True,
         fp16_run=False,
@@ -23,33 +23,33 @@ def create_hparams(hparams_string=None, verbose=False):
         ################################
         # Data Parameters             #
         ################################
-        load_mel_from_disk=False,
-        training_files='filelists/ljs_audio_text_train_filelist.txt',
-        validation_files='filelists/ljs_audio_text_val_filelist.txt',
-        text_cleaners=['english_cleaners'],
+        # load_mel_from_disk=False,
+        # training_files='filelists/ljs_audio_text_train_filelist.txt',
+        # validation_files='filelists/ljs_audio_text_val_filelist.txt',
+        # text_cleaners=['english_cleaners'],
 
         ################################
         # Audio Parameters             #
         ################################
-        max_wav_value=32768.0,
-        sampling_rate=22050,
-        filter_length=1024,
-        hop_length=256,
-        win_length=1024,
+        # max_wav_value=32768.0,
+        # sampling_rate=22050,
+        # filter_length=1024,
+        # hop_length=256,
+        # win_length=1024,
         n_mel_channels=466, # It meant as maximum length of ema output frame(I'm thinking it's no of outcomes, not sure if that's what it really means)
-        mel_fmin=0.0,
-        mel_fmax=8000.0,
+        # mel_fmin=0.0,
+        # mel_fmax=8000.0,
 
         ################################
         # Model Parameters             #
         ################################
         n_symbols=len(symbols),
-        symbols_embedding_dim=512,
+        symbols_embedding_dim=600,
 
         # Encoder parameters
         encoder_kernel_size=5,
         encoder_n_convolutions=3,
-        encoder_embedding_dim=512,
+        encoder_embedding_dim=600,
 
         # Decoder parameters
         n_frames_per_step=1,  # currently only 1 is supported

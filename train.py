@@ -19,6 +19,7 @@ from loss_function import Tacotron2Loss
 from logger import Tacotron2Logger
 from hparams import create_hparams
 
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 def batchnorm_to_float(module):
     """Converts batch norm modules to FP32"""
@@ -41,7 +42,7 @@ def init_distributed(hparams, n_pus, rank, group_name):
     print("Initializing Distributed")
 
     # Set cuda device so everything is done on the right GPU.
-    torch.cuda.set_device(rank % torch.cuda.device_count())
+    torch.cuda.set_device(0)#rank % torch.cuda.device_count())
 
     # Initialize distributed communication
     dist.init_process_group(
@@ -161,7 +162,8 @@ def train(output_directory, log_directory, checkpoint_path, warm_start, n_gpus,
         init_distributed(hparams, n_gpus, rank, group_name)
 
     torch.manual_seed(hparams.seed)
-    torch.cuda.manual_seed(hparams.seed)
+    # torch.cuda.manual_seed(hparams.seed)
+    
 
     model = load_model(hparams)
     learning_rate = hparams.learning_rate
@@ -269,6 +271,8 @@ if __name__ == '__main__':
 
     torch.backends.cudnn.enabled = hparams.cudnn_enabled
     torch.backends.cudnn.benchmark = hparams.cudnn_benchmark
+
+    torch.backends.cudnn.enabled = False
 
     print("FP16 Run:", hparams.fp16_run)
     print("Dynamic Loss Scaling:", hparams.dynamic_loss_scaling)
