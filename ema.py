@@ -94,121 +94,126 @@ def pre_process(self, index, train = True):
 class train_ema:
 
     def __init__(self):
-        EmaDir='EmaClean/'
-        AliDir='ForceAlign/'
-       
-        emafiles=sorted(os.listdir(EmaDir))
-        alifiles=sorted(os.listdir(AliDir))
+        folist = sorted(os.listdir('data'))
+        phon = []
+        emaa = []
+        for i in folist:
 
-        train_ema = [loadmat(EmaDir+idx) for idx in emafiles]
-        train_ali = [pd.read_csv(AliDir+idx,header=None) for idx in alifiles]
+            EmaDir= i + 'EmaClean/'
+            AliDir=i + 'ForceAlign/'
+        
+            emafiles=sorted(os.listdir(EmaDir))
+            alifiles=sorted(os.listdir(AliDir))
 
-        phoneme=[]
-        new_phoneme=[]
-        set_phoneme=[]
-        time_phoneme=[]
-        time_sil=[]
+            train_ema = [loadmat(EmaDir+idx) for idx in emafiles]
+            train_ali = [pd.read_csv(AliDir+idx,header=None) for idx in alifiles]
 
-        for i in range(460):
-            phoneme.append(train_ali[i][0].map(lambda x:x.split()))
-            
-        for i in range(460):
-            new_phoneme.append(list(phoneme[i][1:-1].map(lambda x: x[2])))
-            time_phoneme.append(list(phoneme[i].map(lambda x: [float(x[0]),float(x[1])])))
-            set_phoneme.extend(list(phoneme[i][1:-1].map(lambda x: x[2])))
+            phoneme=[]
+            new_phoneme=[]
+            set_phoneme=[]
+            time_phoneme=[]
+            time_sil=[]
 
-        begin=0
-        end=0
-        for i in range(460):
-            begin=int(float(time_phoneme[i][0][1])*100)
-            end=int(float(time_phoneme[i][-1][0])*100)
-            time_sil.append([begin,end])
-            
-        for i in range(460):
-            time_phoneme[i]=time_phoneme[i][1:-1]
-            
-        for i in range(460):
-            time_phoneme[i]=(np.multiply(time_phoneme[i],100))
-            
-        for i in range(len(time_phoneme)):
-            time_phoneme[i]=list(map(lambda x:int(round(x[1]-x[0])),time_phoneme[i]))
+            for i in range(460):
+                phoneme.append(train_ali[i][0].map(lambda x:x.split()))
+                
+            for i in range(460):
+                new_phoneme.append(list(phoneme[i][1:-1].map(lambda x: x[2])))
+                time_phoneme.append(list(phoneme[i].map(lambda x: [float(x[0]),float(x[1])])))
+                set_phoneme.extend(list(phoneme[i][1:-1].map(lambda x: x[2])))
+
+            begin=0
+            end=0
+            for i in range(460):
+                begin=int(float(time_phoneme[i][0][1])*100)
+                end=int(float(time_phoneme[i][-1][0])*100)
+                time_sil.append([begin,end])
+                
+            for i in range(460):
+                time_phoneme[i]=time_phoneme[i][1:-1]
+                
+            for i in range(460):
+                time_phoneme[i]=(np.multiply(time_phoneme[i],100))
+                
+            for i in range(len(time_phoneme)):
+                time_phoneme[i]=list(map(lambda x:int(round(x[1]-x[0])),time_phoneme[i]))
 
 
+
+        
+            zero='0'
+    
+            EOS='</s>'
+            SOS='<s>'
 
     
-        zero='0'
-  
-        EOS='</s>'
-        SOS='<s>'
+            # word_to_int={}
+            # int_to_word={}
 
- 
-        # word_to_int={}
-        # int_to_word={}
+            # word_to_int=dict((y,x) for x,y in enumerate(set_phoneme))
+            # int_to_word=dict((x,y) for x,y in enumerate(set_phoneme))
+            with open('variables/word_to_int', 'rb') as handle:
+                word_to_int = pickle.loads(handle.read())
 
-        # word_to_int=dict((y,x) for x,y in enumerate(set_phoneme))
-        # int_to_word=dict((x,y) for x,y in enumerate(set_phoneme))
-        with open('variables/word_to_int', 'rb') as handle:
-            word_to_int = pickle.loads(handle.read())
+            for i in range(len(new_phoneme)):
+                for j in range(len(new_phoneme[i])):
+                    new_phoneme[i][j]=word_to_int[new_phoneme[i][j]]
 
-        for i in range(len(new_phoneme)):
-            for j in range(len(new_phoneme[i])):
-                new_phoneme[i][j]=word_to_int[new_phoneme[i][j]]
-
-        copy_phoneme = deepcopy(new_phoneme)   
+            copy_phoneme = deepcopy(new_phoneme)   
 
 
-        maxlen=max([len(new_phoneme[i]) for i in range(len(new_phoneme))])# largest length of a sentence is 62, and it's 331'th  item, which mean"
+            maxlen=max([len(new_phoneme[i]) for i in range(len(new_phoneme))])# largest length of a sentence is 62, and it's 331'th  item, which mean"
 
-        for i in range(np.shape(new_phoneme)[0]):
-            for _ in range(maxlen-np.shape(new_phoneme[i])[0]):
-                new_phoneme[i].append(0)
-        self.train_new_phoneme = new_phoneme[0:400]
-        self.test_new_phoneme = new_phoneme[400:]
+            for i in range(np.shape(new_phoneme)[0]):
+                for _ in range(maxlen-np.shape(new_phoneme[i])[0]):
+                    new_phoneme[i].append(0)
+            self.train_new_phoneme = new_phoneme[0:400]
+            self.test_new_phoneme = new_phoneme[400:]
 
-        ema=[]
-        new_ema=[]
+            ema=[]
+            new_ema=[]
 
-        for i in range(460):
-            ema.append(train_ema[i]['EmaData'])
+            for i in range(460):
+                ema.append(train_ema[i]['EmaData'])
 
-        for i in range(460):
-            EMA_temp=ema[i]
-            EMA_temp=np.transpose(EMA_temp)# time X 18
-            Ema_temp2=np.delete(EMA_temp, [4,5,6,7,10,11],1) # time X 12 Supposedly these dimensions of information contains most data.
-            MeanOfData=np.mean(Ema_temp2,axis=0) 
-            Ema_temp2-=MeanOfData
-            C=np.sqrt(np.mean(np.square(Ema_temp2),axis=0))
-            Ema=np.divide(Ema_temp2,C) # Mean remov & var normailized
-            [aE,bE]=Ema.shape
-            new_ema.append(Ema)
+            for i in range(460):
+                EMA_temp=ema[i]
+                EMA_temp=np.transpose(EMA_temp)# time X 18
+                Ema_temp2=np.delete(EMA_temp, [4,5,6,7,10,11],1) # time X 12 Supposedly these dimensions of information contains most data.
+                MeanOfData=np.mean(Ema_temp2,axis=0) 
+                Ema_temp2-=MeanOfData
+                C=np.sqrt(np.mean(np.square(Ema_temp2),axis=0))
+                Ema=np.divide(Ema_temp2,C) # Mean remov & var normailized
+                [aE,bE]=Ema.shape
+                new_ema.append(Ema)
 
-        for i in range(460):
-            new_ema[i]=new_ema[i][time_sil[i][0]:time_sil[i][1]]
+            for i in range(460):
+                new_ema[i]=new_ema[i][time_sil[i][0]:time_sil[i][1]]
 
-        for i in range(460):
-            new_ema[i]=np.transpose(new_ema[i])
+            for i in range(460):
+                new_ema[i]=np.transpose(new_ema[i])
 
-        max_len_art=max([new_ema[i].shape[1] for i in range(460)]) #Value is 466, which happens to be the same value 
-        
-        putt=np.full((12, 1), 5.0)
-        dec_ema=new_ema.copy()
-
-
-        for i in range(460):
-            for j in range(max_len_art -new_ema[i].shape[1]):
-                new_ema[i]=np.concatenate((new_ema[i],putt),axis=1)
-            new_ema[i]=np.transpose(new_ema[i])
-
-        self.train_new_ema = new_ema[:400]
-        self.test_new_ema = new_ema[400:]
-
-        dec_len = np.array([])
-        enc_len = np.array([])
+            max_len_art=max([new_ema[i].shape[1] for i in range(460)]) #Value is 466, which happens to be the same value 
+            
+            putt=np.full((12, 1), 0.0)
+            dec_ema=new_ema.copy()
 
 
-        for i in range(460):
-            dec_len= np.append(dec_len, dec_ema[i].shape[1] + 2)
-            enc_len = np.append(enc_len, np.shape(copy_phoneme[i])[0])
+            for i in range(460):
+                for j in range(max_len_art -new_ema[i].shape[1]):
+                    new_ema[i]=np.concatenate((new_ema[i],putt),axis=1)
+                new_ema[i]=np.transpose(new_ema[i])
+
+            self.train_new_ema = new_ema[:400]
+            self.test_new_ema = new_ema[400:]
+
+            dec_len = np.array([])
+            enc_len = np.array([])
+
+
+            for i in range(460):
+                dec_len= np.append(dec_len, dec_ema[i].shape[1] + 2)
+                enc_len = np.append(enc_len, np.shape(copy_phoneme[i])[0])
 
         self.train_phoneme_len = enc_len[0:400]
         self.test_phoneme_len = enc_len[400:]
@@ -351,7 +356,7 @@ class test_ema:
 
         max_len_art=max([new_ema[i].shape[1] for i in range(460)]) #Value is 466, which happens to be the same value 
         
-        putt=np.full((12, 1), 5.0)
+        putt=np.full((12, 1), 0.0)
         dec_ema=new_ema.copy()
 
 
