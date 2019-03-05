@@ -20,5 +20,8 @@ _arpabet = ['@' + s for s in cmudict.valid_symbols]
 with open('variables/set_phoneme', 'rb') as handle: 
     sett = pickle.loads(handle.read())
 
+for i in range(1000, 1012):
+    sett.add(i)
+
 symbols = list(sett)
 

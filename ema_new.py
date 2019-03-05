@@ -13,7 +13,8 @@ from scipy.io import loadmat
 import pickle
 import random
 from random import shuffle
-
+# np.random.RandomState(1234)
+random.seed(1234)
 
 def pre_process(self, index, train = True):
       
@@ -96,23 +97,21 @@ def pre_process(self, index, train = True):
 class train_ema:
 
     def __init__(self):
-
         folist = sorted(os.listdir('data'))
         phon = []
         emaa = []
         plen = []
         elen = []
-        max_len_art = 769
-        # max_len_art = 466
+        # max_len_art = 769
+        max_len_art = 466
         maxlen = 65
-        sped = list(range(1000, 1011))
+        sped = np.arange(1000, 1011)
         curr_index = 0
         N = 5060
         for i in folist:
 
-
-            EmaDir='data/' +i+'/EmaClean/'
-            AliDir='data/' +i+'/ForceAlign/'
+            EmaDir= 'data/'+ i + '/EmaClean/'
+            AliDir= 'data/' + i + '/ForceAlign/'
         
             emafiles=sorted(os.listdir(EmaDir))
             alifiles=sorted(os.listdir(AliDir))
@@ -133,9 +132,6 @@ class train_ema:
                 new_phoneme.append(list(phoneme[i][1:-1].map(lambda x: x[2])))
                 time_phoneme.append(list(phoneme[i].map(lambda x: [float(x[0]),float(x[1])])))
                 set_phoneme.extend(list(phoneme[i][1:-1].map(lambda x: x[2])))
-                # print(len(new_phoneme[i]))
-                new_phoneme[i].extend([sped[curr_index]])
-                # print(len(new_phoneme[/]))
 
             begin=0
             end=0
@@ -170,28 +166,26 @@ class train_ema:
             with open('variables/word_to_int', 'rb') as handle:
                 word_to_int = pickle.loads(handle.read())
 
-            
             for i in range(len(new_phoneme)):
                 for j in range(len(new_phoneme[i])):
                     new_phoneme[i][j]=word_to_int[new_phoneme[i][j]]
-                # print(new_phoneme[i].extend(10))
-                # print(len(new_phoneme[i]))
-                # new_phoneme[i].extend([sped[curr_index]])
-                # print(len(new_phoneme[i]))
+                new_phoneme[i].append(sped[curr_index])
+
 
             curr_index+=1
 
             copy_phoneme = deepcopy(new_phoneme)   
 
 
-            # maxlen=max([len(new_phoneme[i]) for i in range(len(new_phoneme))])# largest length of a sentence is 62, and it's 331'th  item, which mean"
+            maxlen_this=max([len(new_phoneme[i]) for i in range(len(new_phoneme))])# largest length of a sentence is 62, and it's 331'th  item, which mean"
+            if maxlen_this > maxlen:
+                print("In this case, maxlen_this is greater: ", maxlen_this)
 
             for i in range(np.shape(new_phoneme)[0]):
                 for _ in range(maxlen-np.shape(new_phoneme[i])[0]):
                     new_phoneme[i].append(0)
             phon.extend(new_phoneme)
-            # self.train_new_phoneme = new_phoneme[0:5000]
-            # self.test_new_phoneme = new_phoneme[5000:]
+
 
             ema=[]
             new_ema=[]
@@ -216,7 +210,9 @@ class train_ema:
             for i in range(460):
                 new_ema[i]=np.transpose(new_ema[i])
 
-            # max_len_art=max([new_ema[i].shape[1] for i in range(460)]) #Value is 466, which happens to be the same value 
+            max_len_this=max([new_ema[i].shape[1] for i in range(460)]) #Value is 466, which happens to be the same value 
+            if(max_len_this > max_len_art):
+                print("Max len of ema is greater and value is:", max_len_this)
             
             putt=np.full((12, 1), 0.0)
             dec_ema=new_ema.copy()
@@ -227,10 +223,10 @@ class train_ema:
                     new_ema[i]=np.concatenate((new_ema[i],putt),axis=1)
                 new_ema[i]=np.transpose(new_ema[i])
 
-            emaa.extend(new_ema)
 
-            # self.train_new_ema = new_ema[:5000]
-            # self.test_new_ema = new_ema[5000:]
+            emaa.extend(new_ema)
+            
+
 
             dec_len = np.array([])
             enc_len = np.array([])
@@ -239,6 +235,7 @@ class train_ema:
             for i in range(460):
                 dec_len= np.append(dec_len, dec_ema[i].shape[1] + 2)
                 enc_len = np.append(enc_len, np.shape(copy_phoneme[i])[0])
+            
             plen.extend(enc_len)
             elen.extend(dec_len)
         
@@ -250,14 +247,16 @@ class train_ema:
         shuffle(plen)
         random.seed(1234)
         shuffle(elen)
-        
+        phon = np.array(phon)
+        emaa = np.array(emaa)
+        plen = np.array(plen)
+        elen = np.array(elen)
 
-        print("This is phon", np.shape(phon))
-        print("This is ema", np.shape(emaa))
-        print("This is length, phon", np.shape(plen))
-        print("This is length, ema", np.shape(elen))
-
-
+        # print("This is phon", np.shape(phon))
+        # print("This is ema", np.shape(emaa))
+        # print("This is length, phon", np.shape(plen))
+        # print("This is length, ema", np.shape(elen))
+        # random.seed(1234)
         self.train_phoneme_len = plen[:5000]
         self.test_phoneme_len = plen[5000:]
         self.train_ema_len = elen[0:5000]
@@ -266,12 +265,6 @@ class train_ema:
         self.test_new_ema = emaa[5000:]
         self.train_new_phoneme = phon[0:5000]
         self.test_new_phoneme = phon[5000:]
-
-            # self.train_phoneme_len = enc_len[0:5000]
-            # self.test_phoneme_len = enc_len[5000:]
-
-            # self.train_ema_len = dec_len[0:5000]
-            # self.test_ema_len = dec_len[5000:]
 
         with open('new_var/train_phoneme_len', 'wb') as handle:  
             pickle.dump(self.train_phoneme_len, handle) 
@@ -309,30 +302,28 @@ class train_ema:
         return self.get_mel_text_pair(index)
 
     def __len__(self):
-        return 5000
+        return 400
 
 
 
 class test_ema:
 
     def __init__(self):
-    
+
         folist = sorted(os.listdir('data'))
         phon = []
         emaa = []
         plen = []
         elen = []
         max_len_art = 769
-        # max_len_art = 466
         maxlen = 65
-        sped = list(range(1000, 1011))
+        sped = np.arange(1000, 1011)
         curr_index = 0
         N = 5060
         for i in folist:
 
-
-            EmaDir='data/' +i+'/EmaClean/'
-            AliDir='data/' +i+'/ForceAlign/'
+            EmaDir= 'data/'+ i + '/EmaClean/'
+            AliDir= 'data/' + i + '/ForceAlign/'
         
             emafiles=sorted(os.listdir(EmaDir))
             alifiles=sorted(os.listdir(AliDir))
@@ -353,9 +344,6 @@ class test_ema:
                 new_phoneme.append(list(phoneme[i][1:-1].map(lambda x: x[2])))
                 time_phoneme.append(list(phoneme[i].map(lambda x: [float(x[0]),float(x[1])])))
                 set_phoneme.extend(list(phoneme[i][1:-1].map(lambda x: x[2])))
-                # print(len(new_phoneme[i]))
-                new_phoneme[i].extend([sped[curr_index]])
-                # print(len(new_phoneme[i]))
 
             begin=0
             end=0
@@ -390,28 +378,26 @@ class test_ema:
             with open('variables/word_to_int', 'rb') as handle:
                 word_to_int = pickle.loads(handle.read())
 
-            
             for i in range(len(new_phoneme)):
                 for j in range(len(new_phoneme[i])):
                     new_phoneme[i][j]=word_to_int[new_phoneme[i][j]]
-                # print(new_phoneme[i].extend(10))
-                # print(len(new_phoneme[i]))
-                # new_phoneme[i].extend([sped[curr_index]])
-                # print(len(new_phoneme[i]))
+                new_phoneme[i].append(sped[curr_index])
+
 
             curr_index+=1
 
             copy_phoneme = deepcopy(new_phoneme)   
 
 
-            # maxlen=max([len(new_phoneme[i]) for i in range(len(new_phoneme))])# largest length of a sentence is 62, and it's 331'th  item, which mean"
+            maxlen_this=max([len(new_phoneme[i]) for i in range(len(new_phoneme))])# largest length of a sentence is 62, and it's 331'th  item, which mean"
+            if maxlen_this > maxlen:
+                print("In this case, maxlen_this is greater: ", maxlen_this)
 
             for i in range(np.shape(new_phoneme)[0]):
                 for _ in range(maxlen-np.shape(new_phoneme[i])[0]):
                     new_phoneme[i].append(0)
             phon.extend(new_phoneme)
-            # self.train_new_phoneme = new_phoneme[0:5000]
-            # self.test_new_phoneme = new_phoneme[5000:]
+
 
             ema=[]
             new_ema=[]
@@ -436,7 +422,9 @@ class test_ema:
             for i in range(460):
                 new_ema[i]=np.transpose(new_ema[i])
 
-            # max_len_art=max([new_ema[i].shape[1] for i in range(460)]) #Value is 466, which happens to be the same value 
+            max_len_this=max([new_ema[i].shape[1] for i in range(460)]) #Value is 466, which happens to be the same value 
+            if(max_len_this > max_len_art):
+                print("Max len of ema is greater and value is:", max_len_this)
             
             putt=np.full((12, 1), 0.0)
             dec_ema=new_ema.copy()
@@ -447,10 +435,10 @@ class test_ema:
                     new_ema[i]=np.concatenate((new_ema[i],putt),axis=1)
                 new_ema[i]=np.transpose(new_ema[i])
 
-            emaa.extend(new_ema)
 
-            # self.train_new_ema = new_ema[:5000]
-            # self.test_new_ema = new_ema[5000:]
+            emaa.extend(new_ema)
+            
+
 
             dec_len = np.array([])
             enc_len = np.array([])
@@ -459,8 +447,9 @@ class test_ema:
             for i in range(460):
                 dec_len= np.append(dec_len, dec_ema[i].shape[1] + 2)
                 enc_len = np.append(enc_len, np.shape(copy_phoneme[i])[0])
-            plen.extend(enc_len)
-            elen.extend(dec_len)
+            
+            plen.extend(list(enc_len))
+            elen.extend(list(dec_len))
         
         random.seed(1234)
         shuffle(phon)
@@ -470,7 +459,16 @@ class test_ema:
         shuffle(plen)
         random.seed(1234)
         shuffle(elen)
-        
+        # phon = np.array(phon)
+        # emaa = np.array(emaa)
+        # plen = np.array(plen)
+        # elen = np.array(elen)
+
+        # print("This is phon", np.shape(phon))
+        # print("This is ema", np.shape(emaa))
+        # print("This is length, phon", np.shape(plen))
+        # print("This is length, ema", np.shape(elen))
+        # random.seed(1234)
         self.train_phoneme_len = plen[:5000]
         self.test_phoneme_len = plen[5000:]
         self.train_ema_len = elen[0:5000]
@@ -479,37 +477,7 @@ class test_ema:
         self.test_new_ema = emaa[5000:]
         self.train_new_phoneme = phon[0:5000]
         self.test_new_phoneme = phon[5000:]
-
-            # self.train_phoneme_len = enc_len[0:5000]
-            # self.test_phoneme_len = enc_len[5000:]
-
-            # self.train_ema_len = dec_len[0:5000]
-            # self.test_ema_len = dec_len[5000:]
-
-        # with open('new_var/train_phoneme_len', 'wb') as handle:  
-        #     pickle.dump(self.train_phoneme_len, handle) 
-
-        # with open('new_var/test_phoneme_len', 'wb') as handle:  
-        #     pickle.dump(self.test_phoneme_len, handle) 
-
-        # with open('new_var/train_new_ema', 'wb') as handle:  
-        #     pickle.dump(self.train_new_ema, handle) 
-
-        # with open('new_var/test_new_ema', 'wb') as handle:  
-        #     pickle.dump(self.test_new_ema, handle) 
-
-        # with open('new_var/train_ema_len', 'wb') as handle:  
-        #     pickle.dump(self.train_ema_len, handle) 
-
-        # with open('new_var/test_ema_len', 'wb') as handle:  
-        #     pickle.dump(self.test_ema_len, handle) 
-
-        # with open('new_var/train_new_phoneme', 'wb') as handle:  
-        #     pickle.dump(self.train_new_phoneme, handle) 
-
-        # with open('new_var/test_new_phoneme', 'wb') as handle:  
-        #     pickle.dump(self.test_new_phoneme, handle) 
-
+        
 
     def get_mel_text_pair(self, index):
         # separate filename and text
@@ -517,13 +485,17 @@ class test_ema:
         text_padded, input_lengths, mel_padded , output_lengths = pre_process(self, index, train=False)
         return (np.array(text_padded), np.array(input_lengths), np.array(mel_padded) , np.array(output_lengths))
 
+
     def __getitem__(self, index):
-   
+     
         return self.get_mel_text_pair(index)
+    
 
     def __len__(self):
         return 60
-        
+    
+
+
 class TextMelCollate():
     """ Zero-pads model inputs and targets based on number of frames per setep
     """
