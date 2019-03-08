@@ -1,5 +1,6 @@
 from math import sqrt
 import torch
+import numpy as np
 from torch.autograd import Variable
 from torch import nn
 from torch.nn import functional as F
@@ -170,25 +171,57 @@ class Encoder(nn.Module):
         self.lstm = nn.LSTM(hparams.encoder_embedding_dim,
                             int(hparams.encoder_embedding_dim / 2), 1,
                             batch_first=True, bidirectional=True)
+        print("All these got executed")
 
-    def forward(self, x, input_lengths):
+    def forward(self, x, input_lengths, judge):
+
+        # print("raw shape of x is: ", np.shape(judge))
+        # print(judge)
+        print("Upto this part it's working")
         for conv in self.convolutions:
             x = F.dropout(F.relu(conv(x)), 0.5, self.training)
 
         x = x.transpose(1, 2)
+        # print("this is the shape before padded", x.shape)
 
         # pytorch tensor are not reversible, hence the conversion
         # print("idk what's going on in here")
         input_lengths = input_lengths.cpu().numpy()
         x = nn.utils.rnn.pack_padded_sequence(
             x, input_lengths, batch_first=True)
+            
+        # print("this is the shape after padded", np.shape(x))
 
-        self.lstm.flatten_parameters()
+
+        self.lstm.flatten_parameters() 
         outputs, _ = self.lstm(x)
+
+        # check = np.
 
         outputs, _ = nn.utils.rnn.pad_packed_sequence(
             outputs, batch_first=True
             )
+        
+
+        judge = judge.cpu().numpy()
+        
+
+
+
+        store = np.ones((outputs.shape[0], outputs.shape[1], 10))
+        for i in range(len(judge)):
+            store[i] = store[i] * judge[i]
+
+
+        store = to_gpu(store).float()
+
+        
+        print("This is shape of outputs: ", np.shape(outputs))
+        print("This is the shape of judge", np.shape(judge))
+
+        outputs = torch.cat((outputs, store ), dim = 2)
+        print("This is shape of outputs: ", np.shape(outputs))
+
 
         return outputs
 
@@ -480,17 +513,17 @@ class Tacotron2(nn.Module):
         self.postnet = Postnet(hparams)
 
     def parse_batch(self, batch):
-        text_padded, input_lengths, mel_padded , \
-            output_lengths = batch
+        text_padded, input_lengths, mel_padded , output_lengths, judge = batch
         text_padded = to_gpu(text_padded).long()
         input_lengths = to_gpu(input_lengths).long()
-        max_len = 60
+        max_len = 65
         mel_padded = to_gpu(mel_padded).float()
+        judge = to_gpu(judge).float()
         # gate_padded = to_gpu(gate_padded).float()
         output_lengths = to_gpu(output_lengths).long()
 
         return (
-            (text_padded, input_lengths, mel_padded, max_len, output_lengths),
+            (text_padded, input_lengths, mel_padded, max_len, output_lengths, judge),
            ( mel_padded))
 
     def parse_input(self, inputs):
@@ -501,7 +534,7 @@ class Tacotron2(nn.Module):
         
         if self.mask_padding and output_lengths is not None:
             mask = ~get_mask_from_lengths(output_lengths)
-            print("Shapeo of mask: ", mask.shape)
+            print("Shape of mask: ", mask.shape)
             mask = mask.expand(self.n_mel_channels, mask.size(0), mask.size(1))
             mask = mask.permute(1, 0, 2)
 
@@ -513,14 +546,14 @@ class Tacotron2(nn.Module):
         return outputs
 
     def forward(self, inputs):
-        inputs, input_lengths, targets, max_len, \
-            output_lengths = self.parse_input(inputs)
+        inputs, input_lengths, targets, max_len, output_lengths, judge = self.parse_input(inputs)
         input_lengths, output_lengths = input_lengths.data, output_lengths.data
 
         embedded_inputs = self.embedding(inputs).transpose(1, 2)
 
-        encoder_outputs = self.encoder(embedded_inputs, input_lengths)
-
+        encoder_outputs = self.encoder(embedded_inputs, input_lengths, judge)
+        # print("This is input lengths", max(input_lengths))
+        # print("This is the shape of encoder_outputs: ", encoder_outputs.shape)
         mel_outputs, alignments = self.decoder(
             encoder_outputs, targets, memory_lengths=input_lengths)
 
@@ -536,8 +569,7 @@ class Tacotron2(nn.Module):
         inputs = self.parse_input(inputs)
         embedded_inputs = self.embedding(inputs).transpose(1, 2)
         encoder_outputs = self.encoder.inference(embedded_inputs)
-        mel_outputs, alignments = self.decoder.inference(
-            encoder_outputs)
+        mel_outputs, alignments = self.decoder.inference(encoder_outputs)
 
         mel_outputs_postnet = self.postnet(mel_outputs)
         mel_outputs_postnet = mel_outputs + mel_outputs_postnet
