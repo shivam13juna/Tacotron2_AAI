@@ -27,12 +27,12 @@ def create_hparams(hparams_string=None, verbose=False):
         # Model Parameters             #
         ################################
         n_symbols=len(symbols),
-        symbols_embedding_dim=110,
+        symbols_embedding_dim=64,
 
         # Encoder parameters
         encoder_kernel_size=3,
         encoder_n_convolutions=2,
-        encoder_embedding_dim=110,
+        encoder_embedding_dim=64,
 
         # Decoder parameters
         n_frames_per_step=1,  # currently only 1 is supported

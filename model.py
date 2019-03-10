@@ -187,13 +187,13 @@ class Encoder(nn.Module):
 
     def forward(self, x, input_lengths, judge):
 
-        print("raw shape of x is: ", np.shape(x))
+        # print("raw shape of x is: ", np.shape(x))
         # print(judge)
         for conv in self.convolutions:
             x = F.dropout(F.relu(conv(x)), 0.5, self.training)
 
         x = x.transpose(1, 2)
-        print("this is the shape after conv", x.shape)
+        # print("this is the shape after conv", x.shape)
 
         # pytorch tensor are not reversible, hence the conversion
         # print("idk what's going on in here")
@@ -215,7 +215,7 @@ class Encoder(nn.Module):
             outputs, batch_first=True
             )
         
-        print("This is the outputs's shape after lstm and apdded: ", outputs.shape)
+        # print("This is the outputs's shape after lstm and apdded: ", outputs.shape)
         judge = judge.cpu().numpy()
         
 
@@ -233,7 +233,7 @@ class Encoder(nn.Module):
         # print("This is the shape of judge", np.shape(judge))
 
         outputs = torch.cat((outputs, store ), dim = 2)
-        print("This is shape of final outputs: ", np.shape(outputs))
+        # print("This is shape of final outputs: ", np.shape(outputs))
 
 
         return outputs
@@ -288,7 +288,7 @@ class Decoder(nn.Module):
         # self.gate_layer = LinearNorm(
         #     hparams.decoder_rnn_dim + hparams.encoder_embedding_dim, 1,
                 # bias=True, w_init_gain='sigmoid')
-        print("All __init__ of decoder, done")
+        # print("All __init__ of decoder, done")
     def get_go_frame(self, memory):
         """ Gets all zeros frames to use as first decoder input
         PARAMS
@@ -316,19 +316,19 @@ class Decoder(nn.Module):
         """
         B = memory.size(0)
         MAX_TIME = memory.size(1)
-        print("This the shape of memory and mask", memory.shape, mask.shape)
+        # print("This the shape of memory and mask", memory.shape, mask.shape)
 
         self.attention_hidden = Variable(memory.data.new(
             B, self.attention_rnn_dim).zero_())
         self.attention_cell = Variable(memory.data.new(
             B, self.attention_rnn_dim).zero_())
-        print("Attention hidden done")
+        # print("Attention hidden done")
 
         self.decoder_hidden = Variable(memory.data.new(
             B, self.decoder_rnn_dim).zero_())
         self.decoder_cell = Variable(memory.data.new(
             B, self.decoder_rnn_dim).zero_())
-        print("Decoder hidden done")
+        # print("Decoder hidden done")
 
         self.attention_weights = Variable(memory.data.new(
             B, MAX_TIME).zero_())
@@ -336,11 +336,11 @@ class Decoder(nn.Module):
             B, MAX_TIME).zero_())
         self.attention_context = Variable(memory.data.new(
             B, self.encoder_embedding_dim).zero_())
-        print("Attention weight done")
+        # print("Attention weight done")
         self.memory = memory
         self.processed_memory = self.attention_layer.memory_layer(memory)
         self.mask = mask
-        print('last mask done')
+        # print('last mask done')
 
     def parse_decoder_inputs(self, decoder_inputs):
         """ Prepares decoder inputs, i.e. mel outputs
@@ -448,7 +448,7 @@ class Decoder(nn.Module):
         gate_outputs: gate outputs from the decoder
         alignments: sequence of attention weights from the decoder
         """
-        print("Shape of memory, decoder_inputs, and memory_lengths are: ", memory.shape, decoder_inputs.shape, memory_lengths.shape)
+        # print("Shape of memory, decoder_inputs, and memory_lengths are: ", memory.shape, decoder_inputs.shape, memory_lengths.shape)
         decoder_input = self.get_go_frame(memory).unsqueeze(0)
         # print("Shape of decoder_input", decoder_input.shape)
 
@@ -517,7 +517,7 @@ class Tacotron2(nn.Module):
         self.fp16_run = hparams.fp16_run
         self.n_mel_channels = hparams.n_mel_channels
         self.n_frames_per_step = hparams.n_frames_per_step
-        print("Checking something: ", hparams.n_symbols)
+        # print("Checking something: ", hparams.n_symbols)
         self.embedding = nn.Embedding(
             hparams.n_symbols, hparams.symbols_embedding_dim )     
         std = sqrt(2.0 / (hparams.n_symbols + hparams.symbols_embedding_dim))
@@ -549,7 +549,7 @@ class Tacotron2(nn.Module):
         
         if self.mask_padding and output_lengths is not None:
             mask = ~get_mask_from_lengths(output_lengths)
-            print("Shape of mask: ", mask.shape)
+            # print("Shape of mask: ", mask.shape)
             mask = mask.expand(self.n_mel_channels, mask.size(0), mask.size(1))
             mask = mask.permute(1, 0, 2)
 
@@ -566,10 +566,10 @@ class Tacotron2(nn.Module):
         # print("Shape of inputs: ",inputs.shape)
         embedded_inputs = self.embedding(inputs).transpose(1, 2)
 
-        print("This is the shape of embedded_inputs: ", embedded_inputs.shape)
+        # print("This is the shape of embedded_inputs: ", embedded_inputs.shape)
 
         encoder_outputs = self.encoder(embedded_inputs, input_lengths, judge)
-        print("This time we got encoder outputs as well, I c")
+        # print("This time we got encoder outputs as well, I c")
         # print("This is input lengths", max(input_lengths))
         # print("This is the shape of encoder_outputs: ", encoder_outputs.shape)
         # print("This is the shape of input lengths", input_lengths.shape)

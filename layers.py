@@ -28,7 +28,7 @@ class ConvNorm(torch.nn.Module):
 
         self.conv = torch.nn.Conv1d(in_channels , out_channels , kernel_size=kernel_size, stride=stride, padding=padding, 
         dilation=dilation, bias=bias)
-        print("This is working for in_channels and out_channels: ", in_channels, out_channels)
+        # print("This is working for in_channels and out_channels: ", in_channels, out_channels)
         torch.nn.init.xavier_uniform_(
             self.conv.weight, gain=torch.nn.init.calculate_gain(w_init_gain))
 
