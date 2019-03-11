@@ -44,8 +44,8 @@ def create_hparams(hparams_string=None, verbose=False):
         p_decoder_dropout=0.1,
 
         # Attention parameters
-        attention_rnn_dim=32,
-        attention_dim=15,
+        attention_rnn_dim=64,
+        attention_dim=32,
 
         # Location Layer parameters
         attention_location_n_filters=16,

@@ -215,7 +215,7 @@ class Encoder(nn.Module):
             outputs, batch_first=True
             )
         
-        # print("This is the outputs's shape after lstm and apdded: ", outputs.shape)
+        print("This is the outputs's shape after lstm and apdded: ", outputs.shape)
         judge = judge.cpu().numpy()
         
 
@@ -246,6 +246,21 @@ class Encoder(nn.Module):
 
         self.lstm.flatten_parameters()
         outputs, _ = self.lstm(x)
+
+        store = np.ones((outputs.shape[0], outputs.shape[1], 10))
+        for i in range(outputs.shape[0]):
+            store[i] = store[i] * 1000
+
+
+        store = to_gpu(store).float()
+
+        
+        # print("This is shape of outputs: ", np.shape(outputs))
+        # print("This is the shape of judge", np.shape(judge))
+
+        outputs = torch.cat((outputs, store ), dim = 2)
+        # print("This is shape of final outputs: ", np.shape(outputs))
+        print("This is the shape of inference: ", outputs.shape)
 
         return outputs
 
