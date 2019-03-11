@@ -215,7 +215,7 @@ class Encoder(nn.Module):
             outputs, batch_first=True
             )
         
-        print("This is the outputs's shape after lstm and apdded: ", outputs.shape)
+        # print("This is the outputs's shape after lstm and apdded: ", outputs.shape)
         judge = judge.cpu().numpy()
         
 
