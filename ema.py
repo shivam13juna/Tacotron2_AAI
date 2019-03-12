@@ -18,9 +18,9 @@ from random import shuffle
 def pre_process(self, index, train = True):
       
         if train:
-            return (self.train_new_phoneme[index],  self.train_phoneme_len[index], self.train_new_ema[index], self.train_ema_len[index], self.judge_train[index])
+            return (self.train_new_phoneme[index],  self.train_phoneme_len[index], self.train_new_ema[index], self.train_ema_len[index])
         else:
-            return (self.test_new_phoneme[index], self.test_phoneme_len[index], self.test_new_ema[index], self.test_ema_len[index], self.judge_test[index])
+            return (self.test_new_phoneme[index], self.test_phoneme_len[index], self.test_new_ema[index], self.test_ema_len[index])
 
 
 
@@ -34,7 +34,6 @@ class train_ema:
         emaa = []
         plen = []
         elen = []
-        judge = []
         max_len_art = 769
         # max_len_art = 466
         maxlen = 65
@@ -176,7 +175,6 @@ class train_ema:
                 enc_len = np.append(enc_len, np.shape(copy_phoneme[i])[0])
             plen.extend(enc_len)
             elen.extend(dec_len)
-            judge.extend(sma)
         
         random.seed(1234)
         shuffle(phon)
@@ -202,8 +200,7 @@ class train_ema:
         self.test_new_ema = emaa[5000:]
         self.train_new_phoneme = phon[0:5000]
         self.test_new_phoneme = phon[5000:]
-        self.judge_train = judge[:5000]
-        self.judge_test = judge[5000:]
+
 
             # self.train_phoneme_len = enc_len[0:5000]
             # self.test_phoneme_len = enc_len[5000:]
@@ -239,8 +236,8 @@ class train_ema:
     def get_mel_text_pair(self, index):
         # separate filename and text
         
-        text_padded, input_lengths, mel_padded , output_lengths, judge = pre_process(self, index)
-        return (np.array(text_padded), np.array(input_lengths), np.array(mel_padded) , np.array(output_lengths), np.array(judge))
+        text_padded, input_lengths, mel_padded , output_lengths= pre_process(self, index)
+        return (np.array(text_padded), np.array(input_lengths), np.array(mel_padded) , np.array(output_lengths))
 
     def __getitem__(self, index):
    
@@ -260,7 +257,6 @@ class test_ema:
         emaa = []
         plen = []
         elen = []
-        judge = []
         max_len_art = 769
         # max_len_art = 466
         maxlen = 65
@@ -402,7 +398,6 @@ class test_ema:
                 enc_len = np.append(enc_len, np.shape(copy_phoneme[i])[0])
             plen.extend(enc_len)
             elen.extend(dec_len)
-            judge.extend(sma)
         
         random.seed(1234)
         shuffle(phon)
@@ -428,8 +423,7 @@ class test_ema:
         self.test_new_ema = emaa[5000:]
         self.train_new_phoneme = phon[0:5000]
         self.test_new_phoneme = phon[5000:]
-        self.judge_train = judge[:5000]
-        self.judge_test = judge[5000:]
+
 
             # self.train_phoneme_len = enc_len[0:5000]
             # self.test_phoneme_len = enc_len[5000:]
@@ -441,8 +435,8 @@ class test_ema:
     def get_mel_text_pair(self, index):
         # separate filename and text
         
-        text_padded, input_lengths, mel_padded , output_lengths, judge = pre_process(self, index, train=False)
-        return (np.array(text_padded), np.array(input_lengths), np.array(mel_padded) , np.array(output_lengths), np.array(judge))
+        text_padded, input_lengths, mel_padded , output_lengths = pre_process(self, index, train=False)
+        return (np.array(text_padded), np.array(input_lengths), np.array(mel_padded) , np.array(output_lengths))
 
     def __getitem__(self, index):
    
@@ -464,7 +458,7 @@ class TextMelCollate():
         batch: [text_normalized, mel_normalized]
         """
 
-        text_padded, input_lengths, mel_padded , output_lengths, judge = ([] for i in range(5))
+        text_padded, input_lengths, mel_padded , output_lengths = ([] for i in range(4))
 
 
         for i in range(len(batch)):
@@ -472,7 +466,6 @@ class TextMelCollate():
             input_lengths.append(batch[i][1])
             mel_padded.append(batch[i][2])
             output_lengths.append(batch[i][3])
-            judge.append(batch[i][4])
             # print(input_lengths)
         # Right zero-pad all one-hot text sequences to max input length
         id_ph = np.argsort(input_lengths)[::-1]
@@ -483,9 +476,6 @@ class TextMelCollate():
         
         input_lengths = np.array(input_lengths)
         input_lengths = input_lengths[id_ph]
-
-        judge = np.array(judge)
-        judge = judge[id_ph]
 
         mel_padded = np.array(mel_padded)
         mel_padded = mel_padded[id_ema]
@@ -521,7 +511,7 @@ class TextMelCollate():
         #     gate_padded[i, mel.size(1)-1:] = 1
         #     output_lengths[i] = mel.size(1)
 
-        return text_padded, input_lengths, mel_padded, output_lengths, judge
+        return text_padded, input_lengths, mel_padded, output_lengths
 
 
 
